@@ -347,8 +347,8 @@ typedef NS_ENUM(NSInteger, BEMInternalTags)
                 self.popUpView.alpha = 0;
                 [self addSubview:self.popUpView];
             } else {
-                NSString *maxValueString = [NSString stringWithFormat:self.formatStringForValues, [self calculateMaximumPointValue].doubleValue];
-                NSString *minValueString = [NSString stringWithFormat:self.formatStringForValues, [self calculateMinimumPointValue].doubleValue];
+                NSString *maxValueString = [self yLabelForValue:[self calculateMaximumPointValue].doubleValue];
+                NSString *minValueString = [self yLabelForValue:[self calculateMinimumPointValue].doubleValue];
                 
                 NSString *longestString = @"";
                 if (maxValueString.length > minValueString.length) {
@@ -421,8 +421,8 @@ typedef NS_ENUM(NSInteger, BEMInternalTags)
     if (self.enableYAxisLabel) {
         NSDictionary *attributes = @{NSFontAttributeName: self.labelFont};
         if (self.autoScaleYAxis == YES){
-            NSString *maxValueString = [NSString stringWithFormat:self.formatStringForValues, self.maxValue];
-            NSString *minValueString = [NSString stringWithFormat:self.formatStringForValues, self.minValue];
+            NSString *maxValueString = [self yLabelForValue:self.maxValue];
+            NSString *minValueString = [self yLabelForValue:self.minValue];
             
             NSString *longestString = @"";
             if (maxValueString.length > minValueString.length) longestString = maxValueString;
@@ -441,11 +441,11 @@ typedef NS_ENUM(NSInteger, BEMInternalTags)
             
             NSString *mString = [longestString stringByReplacingOccurrencesOfString:@"[0-9-]" withString:@"N" options:NSRegularExpressionSearch range:NSMakeRange(0, [longestString length])];
             NSString *fullString = [NSString stringWithFormat:@"%@%@%@", prefix, mString, suffix];
-            self.YAxisLabelXOffset = [fullString sizeWithAttributes:attributes].width + 2;//MAX([maxValueString sizeWithAttributes:attributes].width + 10,
+            self.YAxisLabelXOffset = ceil([fullString sizeWithAttributes:attributes].width) + 2;//MAX([maxValueString sizeWithAttributes:attributes].width + 10,
                                      //    [minValueString sizeWithAttributes:attributes].width) + 5;
         } else {
             NSString *longestString = [NSString stringWithFormat:@"%i", (int)self.frame.size.height];
-            self.YAxisLabelXOffset = [longestString sizeWithAttributes:attributes].width + 5;
+            self.YAxisLabelXOffset = ceil([longestString sizeWithAttributes:attributes].width) + 5;
         }
     } else self.YAxisLabelXOffset = 0;
 
@@ -878,7 +878,8 @@ typedef NS_ENUM(NSInteger, BEMInternalTags)
     CGRect rect = labelXAxis.frame;
     rect.size = lRect.size;
     labelXAxis.frame = rect;
-    labelXAxis.center = center;
+    labelXAxis.center = CGPointMake(center.x, center.y - 1);
+    labelXAxis.frame = CGRectIntegral(labelXAxis.frame);
     return labelXAxis;
 }
 
@@ -967,7 +968,7 @@ typedef NS_ENUM(NSInteger, BEMInternalTags)
         for (NSNumber *dotValue in dotValues) {
             CGFloat yAxisPosition = [self yPositionForDotValue:dotValue.floatValue];
             UILabel *labelYAxis = [[UILabel alloc] initWithFrame:frameForLabelYAxis];
-            NSString *formattedValue = [NSString stringWithFormat:self.formatStringForValues, dotValue.doubleValue];
+            NSString *formattedValue = [self yLabelForValue:dotValue.doubleValue];
             labelYAxis.text = [NSString stringWithFormat:@"%@%@%@", yAxisPrefix, formattedValue, yAxisSuffix];
             labelYAxis.textAlignment = textAlignmentForLabelYAxis;
             labelYAxis.font = self.labelFont;
@@ -975,6 +976,7 @@ typedef NS_ENUM(NSInteger, BEMInternalTags)
             labelYAxis.backgroundColor = [UIColor clearColor];
             labelYAxis.tag = LabelYAxisTag2000;
             labelYAxis.center = CGPointMake(xValueForCenterLabelYAxis, yAxisPosition);
+            labelYAxis.frame = CGRectIntegral(labelYAxis.frame);
             [self addSubview:labelYAxis];
             [yAxisLabels addObject:labelYAxis];
             
@@ -996,11 +998,12 @@ typedef NS_ENUM(NSInteger, BEMInternalTags)
             
             UILabel *labelYAxis = [[UILabel alloc] initWithFrame:frameForLabelYAxis];
             labelYAxis.center = CGPointMake(xValueForCenterLabelYAxis, yAxisPosition);
-            labelYAxis.text = [NSString stringWithFormat:self.formatStringForValues, (graphHeight - self.XAxisLabelYOffset - yAxisPosition)];
+            labelYAxis.text = [self yLabelForValue:(graphHeight - self.XAxisLabelYOffset - yAxisPosition)];
             labelYAxis.font = self.labelFont;
             labelYAxis.textAlignment = textAlignmentForLabelYAxis;
             labelYAxis.textColor = self.colorYaxisLabel;
             labelYAxis.backgroundColor = [UIColor clearColor];
+            labelYAxis.frame = CGRectIntegral(labelYAxis.frame);
             labelYAxis.tag = LabelYAxisTag2000;
             
             [self addSubview:labelYAxis];
@@ -1097,7 +1100,7 @@ typedef NS_ENUM(NSInteger, BEMInternalTags)
 
     int index = (int)(circleDot.tag - DotFirstTag100);
     NSNumber *value = dataPoints[index]; // @((NSInteger) circleDot.absoluteValue)
-    NSString *formattedValue = [NSString stringWithFormat:self.formatStringForValues, value.doubleValue];
+    NSString *formattedValue = [self yLabelForValue:value.doubleValue];
     permanentPopUpLabel.text = [NSString stringWithFormat:@"%@%@%@", prefix, formattedValue, suffix];
     
     permanentPopUpLabel.font = self.labelFont;
@@ -1433,7 +1436,7 @@ typedef NS_ENUM(NSInteger, BEMInternalTags)
             prefix = [self.delegate popUpPrefixForlineGraph:self];
         }
         NSNumber *value = dataPoints[index];
-        NSString *formattedValue = [NSString stringWithFormat:self.formatStringForValues, value.doubleValue];
+        NSString *formattedValue = [self yLabelForValue:value.doubleValue];
         self.popUpLabel.text = [NSString stringWithFormat:@"%@%@%@", prefix, formattedValue, suffix];
         self.popUpLabel.center = self.popUpView.center;
     }
@@ -1583,6 +1586,14 @@ typedef NS_ENUM(NSInteger, BEMInternalTags)
 
 - (void)printDeprecationWarningForOldMethod:(NSString *)oldMethod andReplacementMethod:(NSString *)replacementMethod {
     NSLog(@"[BEMSimpleLineGraph] DEPRECATION WARNING. The delegate method, %@, is deprecated and will become unavailable in a future version. Use %@ instead. Update your delegate method as soon as possible. An exception will be thrown in a future version.", oldMethod, replacementMethod);
+}
+
+- (NSString *)yLabelForValue:(double)value
+{
+    if ( [self.dataSource respondsToSelector:@selector(lineGraph:labelOnYAxisForValue:)] ) {
+        return [self.dataSource lineGraph:self labelOnYAxisForValue:value];
+    }
+    return [NSString stringWithFormat:self.formatStringForValues, value];
 }
 
 @end

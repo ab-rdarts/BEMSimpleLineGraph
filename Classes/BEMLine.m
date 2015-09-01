@@ -57,8 +57,8 @@
     if (self.enableRefrenceFrame == YES) {
         if (self.enableBottomReferenceFrameLine) {
             // Bottom Line
-            [referenceFramePath moveToPoint:CGPointMake(0, self.frame.size.height)];
-            [referenceFramePath addLineToPoint:CGPointMake(self.frame.size.width, self.frame.size.height)];
+            [referenceFramePath moveToPoint:CGPointMake(0, self.frame.size.height + 0.5f)];
+            [referenceFramePath addLineToPoint:CGPointMake(self.frame.size.width, self.frame.size.height + 0.5f)];
         }
 
         if (self.enableLeftReferenceFrameLine) {
@@ -106,8 +106,8 @@
 
         if (self.arrayOfHorizontalRefrenceLinePoints.count > 0) {
             for (NSNumber *yNumber in self.arrayOfHorizontalRefrenceLinePoints) {
-                CGPoint initialPoint = CGPointMake(0, [yNumber floatValue]);
-                CGPoint finalPoint = CGPointMake(self.frame.size.width, [yNumber floatValue]);
+                CGPoint initialPoint = CGPointMake(0, roundf([yNumber floatValue]) + 0.5f);
+                CGPoint finalPoint = CGPointMake(self.frame.size.width, roundf([yNumber floatValue]) + 0.5f);
 
                 [horizontalReferenceLinesPath moveToPoint:initialPoint];
                 [horizontalReferenceLinesPath addLineToPoint:finalPoint];
